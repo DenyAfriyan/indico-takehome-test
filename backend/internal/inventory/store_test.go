@@ -68,6 +68,39 @@ func TestConfirmRejectsRepeatedConfirmation(t *testing.T) {
 	}
 }
 
+func TestReserveRejectsSecondActiveReservationForSameUserAndItem(t *testing.T) {
+	now := time.Now()
+	store := newTestStore(&now, 10)
+	if _, err := store.Reserve("usr_1", "item_1", 2); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := store.Reserve("usr_1", "item_1", 1); !errors.Is(err, ErrActiveReservation) {
+		t.Fatalf("second Reserve() error = %v, want ErrActiveReservation", err)
+	}
+
+	stock, err := store.Stock("item_1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertStock(t, stock, 10, 2, 8)
+}
+
+func TestReserveAllowsNewReservationAfterPreviousExpires(t *testing.T) {
+	now := time.Now()
+	store := newTestStore(&now, 10)
+	if _, err := store.Reserve("usr_1", "item_1", 2); err != nil {
+		t.Fatal(err)
+	}
+	now = now.Add(DefaultReservationTTL)
+
+	if _, err := store.Reserve("usr_1", "item_1", 3); err != nil {
+		t.Fatalf("Reserve() after expiry error = %v", err)
+	}
+	stock, _ := store.Stock("item_1")
+	assertStock(t, stock, 10, 3, 7)
+}
+
 func TestReserveValidationAndInsufficientStock(t *testing.T) {
 	now := time.Now()
 	store := newTestStore(&now, 1)

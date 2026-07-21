@@ -125,6 +125,8 @@ func (h *Handler) writeDomainError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusNotFound, "RESERVATION_NOT_FOUND", err.Error())
 	case errors.Is(err, inventory.ErrInsufficientStock):
 		writeError(w, http.StatusConflict, "INSUFFICIENT_STOCK", err.Error())
+	case errors.Is(err, inventory.ErrActiveReservation):
+		writeError(w, http.StatusConflict, "ACTIVE_RESERVATION_EXISTS", err.Error())
 	case errors.Is(err, inventory.ErrReservationExpired):
 		writeError(w, http.StatusConflict, "RESERVATION_EXPIRED", err.Error())
 	case errors.Is(err, inventory.ErrAlreadyConfirmed):

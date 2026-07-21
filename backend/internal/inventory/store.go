@@ -59,6 +59,11 @@ func (s *Store) Reserve(userID, itemID string, quantity int) (Reservation, error
 
 	now := s.clock().UTC()
 	s.expireLocked(now)
+	for _, reservation := range s.reservations {
+		if reservation.Status == ReservationActive && reservation.UserID == userID && reservation.ItemID == itemID {
+			return Reservation{}, ErrActiveReservation
+		}
+	}
 
 	item, ok := s.items[itemID]
 	if !ok {

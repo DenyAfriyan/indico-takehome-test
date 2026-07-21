@@ -81,6 +81,32 @@ func TestInventoryAPINegativeCases(t *testing.T) {
 	}
 }
 
+func TestInventoryAPIRejectsDuplicateActiveReservation(t *testing.T) {
+	store := inventory.NewStore([]inventory.Item{{ID: "item_1", TotalStock: 10}}, nil, nil)
+	handler := NewHandler(store, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	body := `{"user_id":"usr_1","item_id":"item_1","quantity":2}`
+
+	first := performRequest(handler, http.MethodPost, "/api/v1/inventory/reserve", body)
+	if first.Code != http.StatusCreated {
+		t.Fatalf("first reservation status = %d, body = %s", first.Code, first.Body.String())
+	}
+	second := performRequest(handler, http.MethodPost, "/api/v1/inventory/reserve", body)
+	if second.Code != http.StatusConflict {
+		t.Fatalf("second reservation status = %d, want %d", second.Code, http.StatusConflict)
+	}
+	var payload struct {
+		Error struct {
+			Code string `json:"code"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(second.Body.Bytes(), &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.Error.Code != "ACTIVE_RESERVATION_EXISTS" {
+		t.Fatalf("error code = %q", payload.Error.Code)
+	}
+}
+
 func performRequest(handler http.Handler, method, path, body string) *httptest.ResponseRecorder {
 	request := httptest.NewRequest(method, path, strings.NewReader(body))
 	if body != "" {
