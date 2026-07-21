@@ -4,4 +4,4 @@ frontend/dist/
 .env
 coverage.out
 tmp/
-
+.pnpm-store/
