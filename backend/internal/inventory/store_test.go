@@ -53,6 +53,21 @@ func TestExpiredReservationReturnsStock(t *testing.T) {
 	assertStock(t, stock, 10, 0, 10)
 }
 
+func TestConfirmRejectsRepeatedConfirmation(t *testing.T) {
+	now := time.Now()
+	store := newTestStore(&now, 2)
+	reservation, err := store.Reserve("usr_1", "item_1", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.Confirm(reservation.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.Confirm(reservation.ID); !errors.Is(err, ErrAlreadyConfirmed) {
+		t.Fatalf("second Confirm() error = %v, want ErrAlreadyConfirmed", err)
+	}
+}
+
 func TestReserveValidationAndInsufficientStock(t *testing.T) {
 	now := time.Now()
 	store := newTestStore(&now, 1)

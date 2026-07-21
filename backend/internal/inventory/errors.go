@@ -12,4 +12,3 @@ var (
 	ErrReservationExpired  = errors.New("reservation has expired")
 	ErrAlreadyConfirmed    = errors.New("reservation is already confirmed")
 )
-

@@ -36,4 +36,3 @@ type Stock struct {
 	ReservedStock  int    `json:"reserved_stock"`
 	AvailableStock int    `json:"available_stock"`
 }
-
